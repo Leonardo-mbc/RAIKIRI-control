@@ -10,3 +10,18 @@ i2c通信（Aruduino Uno A4, A5）にて加速度を送信
 ```
 acclr[axis] = (h << 8 | l) / 16384.0 * 9.8;
 ```
+
+### 出力設定
+```
+#define ENABLE_MOVEAVG false
+#define LOWPASS_FILTER false
+#define ZEROS_MOD false
+```
+`ENABLE_MOVEAVG`を`true`にすることで、加速度センサーから得られる値の移動平均を算出する
+>このとき、`MOVING_STEPS`にて遅れステップをintで設定  
+
+`LOWPASS_FILTER`を`true`にすることで、加速度センサーの値に簡易的なローパスフィルターをかける
+>遅れは1ステップのみで`(preview * 0.9) + (new * 0.1)`のように前の値9、今の値1で用いる  
+
+`ZEROS_MOD`を`true`にすることで、初期出力の平均値を現在地から減算する
+>`LEARN_STEPS`を設定することで初期出力の`LEARN_STEPS`ステップ分だけサンプルをとり平均値として保持する  
