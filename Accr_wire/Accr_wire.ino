@@ -105,7 +105,7 @@ void loop()
         integral[axis] = 0;
       }
       integral_count = 0;
-      //Serial.println("speed: " + speed_value);
+      Serial.println("speed: " + speed_value);
       // スピード出力 //if(speed[1] < 1000000) Serial.println(speed[1]);
     }
     
