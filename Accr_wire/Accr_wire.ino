@@ -6,6 +6,7 @@
 #define ENABLE_MOVEAVG false
 #define LOWPASS_FILTER false
 #define ZEROS_MOD false
+#define OUTPUT_TYPE "json"
 #include <Wire.h>
 
 int led = 13, sgn = 10;
@@ -47,7 +48,7 @@ void writeRegister(byte reg, byte data)
 void setup()
 {
     Wire.begin();
-    Serial.begin(57600);
+    Serial.begin(115200);
     pinMode(led, OUTPUT);
     pinMode(sgn, OUTPUT);
     
@@ -105,7 +106,8 @@ void loop()
         integral[axis] = 0;
       }
       integral_count = 0;
-      Serial.println("speed: " + speed_value);
+      if(OUTPUT_TYPE == "json") Serial.println("{ \"speed\": { \"x\": "+ String(speed[0]) +", \"y\": "+ String(speed[1]) +", \"z\": "+ String(speed[2]) +"}}");
+        else Serial.println("speed: " + speed_value);
       // スピード出力 //if(speed[1] < 1000000) Serial.println(speed[1]);
     }
     
