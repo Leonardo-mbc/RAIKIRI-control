@@ -12,6 +12,8 @@
 int led = 13, sgn = 10;
 int step = 0, burn_in = BURN_IN, zeros_learn_steps = LEARN_STEPS;
 const int LIS3DH_ADDR = 0x18;
+const int L3GD20_ADDR = 0xD4 >> 1;
+
 byte addr_map[6] = {0x28, 0x2A, 0x2C, 0x29, 0x2B, 0x2D};
 unsigned long run_time = 0, hold_time = 0, proc_time = 0, keep_time = 0, block_time = 0;
 boolean burnining = false, make_zeros = false;
@@ -26,20 +28,20 @@ long integral[3] = {0.0, 0.0, 0.0};
 unsigned long integral_count = 0;
 int l, h;
 
-unsigned int readRegister(byte reg)
+unsigned int readRegister(int addr, byte reg)
 {
-    Wire.beginTransmission(LIS3DH_ADDR);
+    Wire.beginTransmission(addr);
     Wire.write(reg);
     Wire.endTransmission(false);
     
-    Wire.requestFrom(LIS3DH_ADDR, 1, false);
+    Wire.requestFrom(addr, 1, false);
     Wire.endTransmission(true);
     return Wire.read();
 }
 
-void writeRegister(byte reg, byte data)
+void writeRegister(int addr, byte reg, byte data)
 {
-    Wire.beginTransmission(LIS3DH_ADDR);
+    Wire.beginTransmission(addr);
     Wire.write(reg);
     Wire.write(data);
     Wire.endTransmission(false);
@@ -51,17 +53,33 @@ void setup()
     Serial.begin(115200);
     pinMode(led, OUTPUT);
     pinMode(sgn, OUTPUT);
-    
-    int res = readRegister(0x0F);
+
+    int res;
+
+    /***** LIS3DH SETUP ****/
+    res = readRegister(LIS3DH_ADDR, 0x0F);
     if(res == 0x33) {
-       // Connection success.
-      Serial.println("Success.");
-      writeRegister(0x20, 0x7F);
-      Serial.print("Burn in");
+      // LIS3DH: Connection success.
+      Serial.println("LIS3DH: Connection Successful.");
+      writeRegister(LIS3DH_ADDR, 0x20, 0x7F);
     } else {
-      // Connection failed.
+      // LIS3DH: Connection failed.
+      Serial.println("LIS3DH: Connection failed.");
       Serial.println(res, HEX);
     }
+
+    /***** L3GD20 SETUP ****/
+    res = readRegister(L3GD20_ADDR, 0x0F);
+    if(res == 0xD4){
+      Serial.println("L3GD20: Connection Successful.");
+      writeRegister(L3GD20_ADDR, 0x20, 0x0F);
+    } else {
+      // L3GD20: Connection failed.
+      Serial.println("L3GD20: Connection failed.");
+      Serial.println(res, HEX);
+    }
+
+    Serial.print("Burn in");
 }
 
 void loop()
@@ -72,8 +90,8 @@ void loop()
   if(burnining && make_zeros) {
     /** MAIN STEP ********/
     for(int axis=0; axis<3; axis++) {
-      l = readRegister(addr_map[axis]);
-      h = readRegister(addr_map[axis + 3]);
+      l = readRegister(LIS3DH_ADDR, addr_map[axis]);
+      h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
       
       if(ENABLE_MOVEAVG) {
         acclr[axis] = 0;
@@ -168,8 +186,8 @@ void loop()
     /*
     if(zeros_learn_steps % (LEARN_STEPS / 10) == 0) Serial.print('.');
     for(int axis = 0; axis < 3; axis++) {
-        l = readRegister(addr_map[axis]);
-        h = readRegister(addr_map[axis + 3]);
+        l = readRegister(LIS3DH_ADDR, addr_map[axis]);
+        h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
         zeros[axis] += float(h << 8 | l) / float(LEARN_STEPS);
     }
     
@@ -200,8 +218,8 @@ void loop()
     if(burn_in % (BURN_IN / 10) == 0) Serial.print('.');
     for(int axis = 0; axis < 3; axis++)
     {
-        l = readRegister(addr_map[axis]);
-        h = readRegister(addr_map[axis + 3]);
+        l = readRegister(LIS3DH_ADDR, addr_map[axis]);
+        h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
     }
     burn_in -= 1;
     if(burn_in == 0)
