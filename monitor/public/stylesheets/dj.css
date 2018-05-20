@@ -1,0 +1,91 @@
+body {
+    text-align: center;
+    background-color: rgb(40, 42, 48);
+    color: rgb(222, 222, 222);
+}
+
+.kaosspad {
+    margin-top: 30px;
+    height: 400px;
+    width: 400px;
+    cursor: cell;
+    box-shadow: 0px 0px 2px 5px rgba(0, 0, 0, 0.4) inset;
+    display: inline-block;
+    padding: 4px;
+}
+
+.kaoss_block {
+    margin: 0px;
+    width: 25px;
+    height: 25px;
+    transition: background-color 0.3s ease;
+
+    display: inline-block;
+}
+
+.kaoss_block:hover {
+    background-color: rgba(65, 156, 255, 1);
+    transition: background-color 0.1s ease;
+}
+
+.kaoss_anim {
+    background-color: rgba(255, 65, 156, 1);
+}
+
+.turn_table {
+    position: relative;
+}
+
+.enable_turn {
+    animation-name: enable_turn;
+    animation-duration: 3s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes enable_turn {
+    0% { transform: rotate(360deg) }
+    100% { transform: rotate(0deg) }
+}
+
+.remixes {
+    text-align: center;
+    width: 100%;
+}
+.remixes .cross_fader {
+    color: white;
+    text-align: center;
+    width: 100%;
+    float: left;
+}
+.remixes .cross_fader span {
+    font-size: xx-large;
+}
+.remixes .cross_fader span.A {
+    color: rgba(136, 198, 19, 1);
+}
+.remixes .cross_fader span.B {
+    color: rgba(255, 145, 20, 1);
+}
+.remixes .cross_fader .fader {
+    display: inline-block;
+    margin: 0px 20px 0px 20px;
+    width: 25%;
+    background-image: url('/images/scale_bar.png');
+    background-repeat: repeat-x;
+    background-position: center;
+}
+.remixes .cross_fader .fader .pick {
+    border-radius: 10%;
+    background-color: black;
+    width: 10px;
+    height: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+}
+.remixes .cross_fader .fader .pick .bar {
+    display: inline-block;
+    background-color: white;
+    height: 100%;
+    width: 2px;
+}

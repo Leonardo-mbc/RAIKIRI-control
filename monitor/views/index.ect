@@ -1,0 +1,59 @@
+<% extend 'layout.ect' %>
+
+<% block 'scripts': %>
+    <script type="text/javascript" src="/javascripts/socket_event.js"></script>
+    <script type="text/javascript" src="/javascripts/dashboard.js"></script>
+    <script type="text/javascript" src="/javascripts/controls.js"></script>
+<% end %>
+
+<% block 'stylesheets': %>
+<% end %>
+
+<canvas class="dashboard" width="720" height="400"></canvas>
+<div class="GLCanvas"></div>
+
+<div class="control">
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">制御パネル</h3>
+            <div class="use-control">
+                <input align="right" type="checkbox" name="use-control" checked/>
+            </div>
+        </div>
+        <div class="panel-body">
+            <span class="label label-info">モーター</span><br />
+            <br />
+            <li>
+                <a href="JavaScript: ctr.moterSignal(1);" class="btn btn-primary">正転</a>
+                <a href="JavaScript: ctr.moterSignal(-1);" class="btn btn-success">逆転</a>
+            </li>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var Anime = new AnimeUtls(720, 250);
+    var db = new DashBoard();
+    var ctr = new Controls();
+
+    $(".GLCanvas").append(Anime.renderer.domElement);
+
+    $(function() {
+        db.makeSpeedIndicator();
+        db.makeRotateIndicator();
+        ctr.makeButton();
+
+        setTimeout(function() {
+            db.makeSpeedGraph();
+        }, 1000);
+
+        animate();
+    });
+
+    var animate = function() {
+        requestAnimationFrame(animate);
+        Anime.composer.render();
+        TWEEN.update();
+    };
+
+</script>

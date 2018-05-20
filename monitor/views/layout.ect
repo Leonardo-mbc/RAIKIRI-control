@@ -1,0 +1,38 @@
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name=viewport content="width=720">
+        <meta name="apple-touch-fullscreen" content="yes">
+		<title><%= @title %></title>
+
+		<script type="text/javascript" src="/javascripts/jquery-2.1.1.min.js"></script>
+		<script type="text/javascript" src="/javascripts/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="/javascripts/tween.min.js"></script>
+		<script type="text/javascript" src="/javascripts/three.min.js"></script>
+		<script type="text/javascript" src="/javascripts/EffectComposer.js"></script>
+		<script type="text/javascript" src="/javascripts/CopyShader.js"></script>
+		<script type="text/javascript" src="/javascripts/ShaderPass.js"></script>
+		<script type="text/javascript" src="/javascripts/RenderPass.js"></script>
+		<script type="text/javascript" src="/javascripts/Projector.js"></script>
+		<script type="text/javascript" src="/javascripts/FXAAShader.js"></script>
+		<script type="text/javascript" src="/javascripts/MaskPass.js"></script>
+		<script type="text/javascript" src="/javascripts/AnimeUtls.js"></script>
+		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+		<script type="text/javascript" src="/javascripts/bootstrap.min.js"></script>
+		<script type="text/javascript" src="/javascripts/bootstrap-switch.min.js"></script>
+		<% content 'scripts' %>
+
+		<link href="/stylesheets/style.css" rel="stylesheet">
+		<link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
+		<link href="/stylesheets/bootstrap-switch.min.css" rel="stylesheet">
+		<link href="/stylesheets/jquery-ui.min.css" rel="stylesheet">
+		<% content 'stylesheets' %>
+	</head>
+	<body>
+		<div id="world" class="world">
+			<% content %>
+		</div>
+	</body>
+</html>

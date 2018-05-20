@@ -1,0 +1,51 @@
+<% extend 'layout.ect' %>
+
+<% block 'scripts': %>
+    <script type="text/javascript" src="/javascripts/socket_event.js"></script>
+    <script type="text/javascript" src="/javascripts/DiscJockey.js"></script>
+    <script type="text/javascript" src="/javascripts/AudioUtls.js"></script>
+<% end %>
+
+<% block 'stylesheets': %>
+    <link href="/stylesheets/dj.css" rel="stylesheet">
+<% end %>
+
+<div class="loading">
+    Loading:
+    <span class="value"></span>
+</div>
+
+<div class="remixes">
+    <div class="cross_fader">
+        <span class="A">A</span>
+        <div class="fader">
+            <div class="pick">
+                <div class="bar"></div>
+            </div>
+        </div>
+        <span class="B">B</span>
+    </div>
+</div>
+
+<canvas class="turn_table" width="400" height="400"></canvas>
+<div class="kaosspad">
+    <% for i in [0..181] : %>
+        <div class="kaoss_block"></div>
+    <% end %>
+</div>
+
+<script type="text/javascript">
+    var dj = new DiscJockey();
+
+    $(function() {
+        dj.makeDisc();
+        dj.enable_kaosspad();
+        dj.enable_cross_fader();
+        dj.enable_turntable();
+    });
+
+    var animate = function() {
+        requestAnimationFrame(animate);
+        TWEEN.update();
+    };
+</script>

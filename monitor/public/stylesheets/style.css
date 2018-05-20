@@ -1,0 +1,36 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+canvas {
+    top: 20px;
+    left: 0px;
+    position: absolute;
+}
+
+.GLCanvas {
+    width: 720px;
+    height: 250px;
+    top: 420px;
+    left: 0px;
+    position: absolute;
+}
+
+.control {
+    margin: 10px;
+    width: 700px;
+    top: 700px;
+    left: 0px;
+    position: absolute;
+}
+
+.use-control {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+}
