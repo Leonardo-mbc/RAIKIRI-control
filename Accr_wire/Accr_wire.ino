@@ -1,7 +1,7 @@
 #define MOVING_STEPS 30
 #define ZEROS_LEARN_STEPS 500
 #define BURN_IN 100
-#define TIMEING_VALUE 100000 // 10000000 is 1sec, 1000 is 1msec, 1 is 1microsec
+#define TIMEING_VALUE 100000 // 1,000,000 is 1sec, 1,000 is 1msec, 1 is 1microsec
 
 #define ENABLE_MOVEAVG false
 #define LOWPASS_FILTER false
@@ -11,14 +11,16 @@
 #define OUTPUT_TYPE "json"
 #include <Wire.h>
 
-int led = 13, sgn = 8;
+int offset = 0;
+
+int led = 13, sgn = 8, rsv = 7;
 int step = 0, burn_in = BURN_IN, zeros_learn_steps = ZEROS_LEARN_STEPS;
 const int LIS3DH_ADDR = 0x18;
 const int L3GD20_ADDR = 0xD4 >> 1;
 
 byte addr_map[6] = { 0x28, 0x2A, 0x2C, 0x29, 0x2B, 0x2D };
 unsigned long run_time = 0, hold_time = 0, proc_time = 0, keep_time = 0, block_time = 0;
-boolean burnining = false, make_zeros = false;
+boolean burnining = false, make_zeros = false, control = false;
 
 float acclr[3] = { 0.0, 0.0, 0.0 };
 float rotation[3] = { 0.0, 0.0, 0.0 };
@@ -40,66 +42,136 @@ int LIS3DH_l, LIS3DH_h, L3GD20_l, L3GD20_h;
 
 unsigned int readRegister(int addr, byte reg)
 {
-    Wire.beginTransmission(addr);
-    Wire.write(reg);
-    Wire.endTransmission(false);
-    
-    Wire.requestFrom(addr, 1, false);
-    Wire.endTransmission(true);
-    return Wire.read();
+  Wire.beginTransmission(addr);
+  Wire.write(reg);
+  Wire.endTransmission(false);
+  
+  Wire.requestFrom(addr, 1, false);
+  Wire.endTransmission(true);
+  return Wire.read();
 }
 
 void writeRegister(int addr, byte reg, byte data)
 {
-    Wire.beginTransmission(addr);
-    Wire.write(reg);
-    Wire.write(data);
-    Wire.endTransmission(false);
+  Wire.beginTransmission(addr);
+  Wire.write(reg);
+  Wire.write(data);
+  Wire.endTransmission(false);
 }
 
 void control_proc() {
+  bool over_speed = false, over_speed_H = false, over_time = false;
+  bool abort = false;
+  //float speed_th = -3.90;
+  //float speed_th_H = -7.00;
+  float speed_th = -2.30;
+  float speed_th_H = -2.30;
+  
   proc_time = micros() / 1000.0;
-  if(block_time <= proc_time - keep_time) {
-    
-    if(speed[1] < 1000000) {  // remove noise
+  if(block_time <=  proc_time - keep_time) {
+    /** speed control ****/
+    //if(90000 < proc_time) over_time = true;
+
+    //if(over_time) speed_th = -4.80;
+    if(speed[1] < speed_th) over_speed = true;
+    if(speed[1] < speed_th_H) over_speed_H = true;
+    if(speed[0] == 0 && speed[1] == 0 && speed[2] == 0) abort = true;
+      else abort = false;
+
+    if(abort) {
+      digitalWrite(led, HIGH);
+      digitalWrite(rsv, HIGH);
+      digitalWrite(sgn, LOW);
+      if(OUTPUT_TYPE == "json") Serial.println("{ \"sign\": { \"value\": \"abort\"}}");
+        else Serial.println("##### ABORT #####");
       
-      /** speed control ****/
-      if(0.80 < speed[1]) {
-        digitalWrite(led, HIGH);
-        digitalWrite(sgn, HIGH);
-        keep_time = proc_time;
-        block_time = 500;
-        delay(100);
-        
-        speed[1] = 0;
-        LIS3DH_prev[1] = 0;
-        acclr[1] = 0;
-        
+    } else if(over_speed) {
+      digitalWrite(led, HIGH);
+      digitalWrite(sgn, LOW);
+      keep_time = proc_time;
+      
+      if(over_speed_H) {
+        block_time = 50;
       } else {
-        digitalWrite(led, LOW);
-        digitalWrite(sgn, LOW);
+        block_time = 150;
       }
-      /****  control **/
+
+      delay(100);
       
-      /** slope control ****/
-      /*if(acclr[1] < -4000) {
-        keep_time = proc_time;
-        block_time = 1000;
-      }*/
-      /**** slope control **/
+      speed[1] = 0;
+      LIS3DH_prev[1] = 0;
+      acclr[1] = 0;
       
-      /** balance control ****/
-      /*if(acclr[0] < -2000 || 2000 < acclr[0]) {
-        keep_time = proc_time;
-        block_time = 500;
-      }*/
-      /**** balance control **/
+    } else {
+      digitalWrite(led, LOW);
+      digitalWrite(sgn, HIGH);
+      digitalWrite(rsv, LOW);
+
+      int unko = micros() / 1000.0;
+      if(unko % (10000 + offset) < 100) {
+        digitalWrite(led, HIGH);
+        digitalWrite(sgn, LOW);
+        digitalWrite(rsv, HIGH);
+        delay(1500);
+        //offset += 1500;
+      }
     }
+    /**** speed control **/
+
+    Serial.println("{ \"acclr\": { \"x\": "+ String(acclr[0]) +", \"y\": "+ String(acclr[1]) +", \"z\": "+ String(acclr[2]) +"}}");
     
+    /** slope control ****
+    if(acclr[1] < -4000) {
+      digitalWrite(led, HIGH);
+      digitalWrite(sgn, LOW);
+      keep_time = proc_time;
+      block_time = 100;
+      delay(100);
+      
+      speed[1] = 0;
+      LIS3DH_prev[1] = 0;
+      acclr[1] = 0;
+    } else {
+      digitalWrite(led, LOW);
+      digitalWrite(sgn, HIGH);
+    }
+    **** slope control **/
+    
+    /** balance control ****/
+    /*if(acclr[0] < -2000 || 2000 < acclr[0]) {
+      keep_time = proc_time;
+      block_time = 500;
+    }*/
+    /**** balance control **/
   } else {
     /**** motor stop ****/
     digitalWrite(led, LOW);
     digitalWrite(sgn, LOW);
+  }
+}
+
+void signal_proc() {
+  if(Serial.available() > 0) {
+    digitalWrite(rsv, HIGH);
+    char c = Serial.read();
+    switch(c) {
+      case 'F':
+        digitalWrite(sgn, HIGH);
+      break;
+      case 'B':
+        digitalWrite(sgn, LOW);
+      break;
+      
+      default:
+        digitalWrite(sgn, HIGH);
+      break;
+    }
+
+    digitalWrite(rsv, LOW);
+  } else {
+    
+    digitalWrite(sgn, HIGH);
+    
   }
 }
 
@@ -135,6 +207,7 @@ void setup()
     if(res == 0xD4){
       Serial.println("L3GD20: Connection Successful.");
       writeRegister(L3GD20_ADDR, 0x20, 0x0F);
+      writeRegister(L3GD20_ADDR, 0x23, 0xFF);
       for(int x=0; x<2; x++) {
         digitalWrite(led, HIGH);
         delay(100);
@@ -170,7 +243,7 @@ void loop()
         rotation[axis] = 0;
         
         LIS3DH_moving_steps[axis][step] = (LIS3DH_h << 8 | LIS3DH_l) / 16384.0 * 9.8;
-        L3GD20_moving_steps[axis][step] = L3GD20_h << 8 | L3GD20_l;
+        L3GD20_moving_steps[axis][step] = (L3GD20_h << 8 | L3GD20_l) * 0.07;
         
         for(int local_step = 0; local_step < MOVING_STEPS; local_step++) {
           acclr[axis] += LIS3DH_moving_steps[axis][local_step] / float(MOVING_STEPS);
@@ -215,7 +288,7 @@ void loop()
         hold_time = run_time;
         
         for(int axis = 0; axis < 3; axis++) {
-          speed[axis] = float(integral[axis]) / float(integral_count);
+          speed[axis] = float(integral[axis]) / (float(integral_count) / 3.0);
           speed_value += String(speed[axis]) + " ";
           integral[axis] = 0;
         }
@@ -233,14 +306,15 @@ void loop()
       }
     }
 
-    /*if(SERIAL_OUTPUT) {
+    if(SERIAL_OUTPUT) {
       if(OUTPUT_TYPE == "json") Serial.println("{ \"rotation\": { \"roll\": "+ String(acclr[0]) +", \"pitch\": "+ String(acclr[1]) +", \"yaw\": "+ String(acclr[2]) +"}}");
-          else Serial.println("rotation: " + rpy_value + String(proc_time));
-    }*/
+        else Serial.println("rotation: " + rpy_value + String(proc_time));
+    }
 
     /** proc ****/
     
     control_proc();
+    signal_proc();
     
     /**** proc **/
       
@@ -251,13 +325,13 @@ void loop()
     if(ZEROS_MOD) {
       if(zeros_learn_steps % (ZEROS_LEARN_STEPS / 10) == 0) Serial.print('.');
       for(int axis = 0; axis < 3; axis++) {
-          LIS3DH_l = readRegister(LIS3DH_ADDR, addr_map[axis]);
-          LIS3DH_h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
-          L3GD20_l = readRegister(L3GD20_ADDR, addr_map[axis]);
-          L3GD20_h = readRegister(L3GD20_ADDR, addr_map[axis + 3]);
-          
-          LIS3DH_zeros[axis] += float((LIS3DH_h << 8 | LIS3DH_l) / 16384.0 * 9.8) / float(ZEROS_LEARN_STEPS);
-          L3GD20_zeros[axis] += float(L3GD20_h << 8 | L3GD20_l) / float(ZEROS_LEARN_STEPS);
+        LIS3DH_l = readRegister(LIS3DH_ADDR, addr_map[axis]);
+        LIS3DH_h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
+        L3GD20_l = readRegister(L3GD20_ADDR, addr_map[axis]);
+        L3GD20_h = readRegister(L3GD20_ADDR, addr_map[axis + 3]);
+        
+        LIS3DH_zeros[axis] += float((LIS3DH_h << 8 | LIS3DH_l) / 16384.0 * 9.8) / float(ZEROS_LEARN_STEPS);
+        L3GD20_zeros[axis] += float(L3GD20_h << 8 | L3GD20_l) / float(ZEROS_LEARN_STEPS);
       }
       
       zeros_learn_steps -= 1;
@@ -306,11 +380,11 @@ void loop()
     /** BURN IN SETP ********/
     if(burn_in % (BURN_IN / 10) == 0) Serial.print('.');
     for(int axis = 0; axis < 3; axis++) {
-        LIS3DH_l = readRegister(LIS3DH_ADDR, addr_map[axis]);
-        LIS3DH_h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
-        L3GD20_l = readRegister(L3GD20_ADDR, addr_map[axis]);
-        L3GD20_h = readRegister(L3GD20_ADDR, addr_map[axis + 3]);
-    }
+      LIS3DH_l = readRegister(LIS3DH_ADDR, addr_map[axis]);
+      LIS3DH_h = readRegister(LIS3DH_ADDR, addr_map[axis + 3]);
+      L3GD20_l = readRegister(L3GD20_ADDR, addr_map[axis]);
+      L3GD20_h = readRegister(L3GD20_ADDR, addr_map[axis + 3]);
+  }
     burn_in -= 1;
     if(burn_in == 0) {
         burnining = true;
