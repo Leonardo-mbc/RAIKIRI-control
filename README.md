@@ -25,3 +25,6 @@ acclr[axis] = (h << 8 | l) / 16384.0 * 9.8;
 
 `ZEROS_MOD`を`true`にすることで、初期出力の平均値を現在地から減算する
 >`LEARN_STEPS`を設定することで初期出力の`LEARN_STEPS`ステップ分だけサンプルをとり平均値として保持する  
+
+## モニター
+![3](https://user-images.githubusercontent.com/6761278/40275234-67e2a66c-5c25-11e8-9470-10c9f693587b.png)
